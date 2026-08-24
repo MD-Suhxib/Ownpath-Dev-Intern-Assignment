@@ -39,4 +39,34 @@ describe('ThemeProvider gray tint regression test', () => {
       ).not.toEqual(grayStep9);
     }
   });
+
+  it('isolates theme state when key prop changes across libraries', () => {
+    let capturedBrand: any = null;
+    function TestConsumer() {
+      const ctx = React.useContext(ThemeContext);
+      capturedBrand = ctx?.brand;
+      return null;
+    }
+
+    const voltPreset = { ...DEFAULT_PRESET, name: 'Volt', accentHex: '#00c16a' };
+    const atlasPreset = { ...DEFAULT_PRESET, name: 'Atlas Web', accentHex: '#0055ff' };
+
+    // Simulate Volt active with key="volt"
+    renderToStaticMarkup(
+      <ThemeProvider key="volt" storageKey="prism-ui-theme:volt" defaultPreset={voltPreset}>
+        <TestConsumer />
+      </ThemeProvider>,
+    );
+    expect(capturedBrand?.accentHex).toBe('#00c16a');
+
+    // Simulate switching to Atlas Web with key="atlas-web"
+    renderToStaticMarkup(
+      <ThemeProvider key="atlas-web" storageKey="prism-ui-theme:atlas-web" defaultPreset={atlasPreset}>
+        <TestConsumer />
+      </ThemeProvider>,
+    );
+    // Regression check: Atlas Web must use its own defaultPreset, not leak Volt's accentHex
+    expect(capturedBrand?.accentHex).toBe('#0055ff');
+  });
 });
+
