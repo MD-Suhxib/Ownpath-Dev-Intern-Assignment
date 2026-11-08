@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { VOLT_CODEGEN } from '../libraries/volt/composer/codegen';
+import { seedDoc } from '../libraries/volt/composer/seed';
 import { pascalCase, puckDataToJsx } from './codegen';
 import type { Data } from '@puckeditor/core';
 
@@ -206,4 +207,14 @@ export function QuickActionsScreen() {
     };
     expect(puckDataToJsxVolt(data, 'Bare')).not.toContain('Page');
   });
+
+  it('groups fixtures by module source when a screen uses fixtures from multiple modules', () => {
+    const doc = seedDoc();
+    const stationDetail = doc.screens.find((s) => s.name === 'Station detail')!;
+    const jsx = puckDataToJsxVolt(stationDetail.puckData, stationDetail.name);
+    expect(jsx).toContain("import { SAMPLE_PRICE_BANDS } from '../components/data';");
+    expect(jsx).toContain("import { SAMPLE_TARIFF_NOTES } from '../components/tariffs';");
+    expect(jsx).not.toContain("import { SAMPLE_PRICE_BANDS, SAMPLE_TARIFF_NOTES }");
+  });
 });
+
